@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="341f8af5-b717-49fa-9baf-a908e3f10f40" name="Changes" comment="" />
+    <list default="true" id="341f8af5-b717-49fa-9baf-a908e3f10f40" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/bar_gender.py" beforeDir="false" afterPath="$PROJECT_DIR$/bar_gender.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -37,6 +39,7 @@
   "keyToString": {
     "Python.bar_gender.executor": "Run",
     "Python.histo_age.executor": "Run",
+    "Python.missing_value.executor": "Run",
     "Python.pie-chart.executor": "Run",
     "Python.pie_chart.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",

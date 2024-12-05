@@ -9,6 +9,7 @@ mental_pb = ['Depression', 'Anxiety', 'Panic Attack']
 data_long = data.melt(id_vars='Gender', value_vars=mental_pb,
                       var_name='Mental Problem', value_name='Presence')
 
+
 data_long = data_long[data_long['Presence'] == 'Yes']
 
 plt.figure(figsize=(10, 6))
