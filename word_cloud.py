@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 
 
-data = pd.read_excel("./Student_Mental_Health_Cleaned (1).xlsx")
+data = pd.read_excel("./Student_Mental_Health_Cleaned.xlsx")
 
 text_data = ' '.join(data['Course'].dropna().astype(str))
 wordcloud = WordCloud(background_color='white', width=800, height=400).generate(text_data)

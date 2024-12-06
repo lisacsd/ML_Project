@@ -5,7 +5,7 @@
 import pandas as pd
 from tabulate import tabulate
 
-data = pd.read_excel("./Student_Mental_Health_Cleaned (1).xlsx")
+data = pd.read_excel("./Student_Mental_Health_Cleaned.xlsx")
 
 missing_details = []
 for column in data.columns:

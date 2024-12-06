@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-data = pd.read_excel("./Student_Mental_Health_Cleaned (1).xlsx")
+data = pd.read_excel("./Student_Mental_Health_Cleaned.xlsx")
 
 mental_pb = ['Depression', 'Anxiety', 'Panic Attack']
 data_long = data.melt(id_vars='Gender', value_vars=mental_pb,
