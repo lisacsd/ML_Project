@@ -18,3 +18,5 @@ plt.title("What proportion of mental health problem based on gender ?")
 plt.xlabel("mental health problem")
 plt.ylabel("number of people")
 plt.show()
+
+

@@ -9,3 +9,6 @@ plt.title("the age distribution")
 plt.xlabel("age")
 plt.ylabel("number of students")
 plt.show()
+
+
+
