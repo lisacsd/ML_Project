@@ -1,9 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# verifying that the pie_chart is still the same after processing
+
 
 data = pd.read_excel("./Preprocessed_Student_Mental_Health.xlsx")
-
 
 mental_pb = ['Depression_Yes', 'Anxiety_Yes', 'Panic Attack_Yes']
 
