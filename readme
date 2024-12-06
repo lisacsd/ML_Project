@@ -1,5 +1,5 @@
 ML_PROJECT
-- we exclude timestamp because it doesn't add anything to the data except that it was during covid 
+- we exclude timestamp because it doesn't add anything to the data except that it was during covid
 Explanation Preprocessed table :
 - no change to age no need because not a categorical value
 
@@ -8,3 +8,4 @@ categorical column like gender_female and :
 	•	1 if the value corresponds to the category represented by the column.
 	•	0 otherwise.
 
+- we split the data in 80% training 20% test in two excel file
