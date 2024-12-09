@@ -1,7 +1,7 @@
 ML_PROJECT
 - we exclude timestamp because it doesn't add anything to the data except that it was during covid
 Explanation Preprocessed table :
-- no change to age no need because not a categorical value
+- no change to age no need because not a categorical value and no outliers
 
 - One-Hot Encoding
 categorical column like gender_female and :
