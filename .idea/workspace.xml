@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="341f8af5-b717-49fa-9baf-a908e3f10f40" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Preprocessed_Student_Mental_Health.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/Preprocessed_Student_Mental_Health.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bar_gender.py" beforeDir="false" afterPath="$PROJECT_DIR$/bar_gender.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pie_chart.py" beforeDir="false" afterPath="$PROJECT_DIR$/pie_chart.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/preprocessing.py" beforeDir="false" afterPath="$PROJECT_DIR$/preprocessing.py" afterDir="false" />
-    </list>
+    <list default="true" id="341f8af5-b717-49fa-9baf-a908e3f10f40" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -106,7 +100,7 @@
       <workItem from="1733509914825" duration="653000" />
       <workItem from="1733674739456" duration="581000" />
       <workItem from="1733675325337" duration="1967000" />
-      <workItem from="1733686315331" duration="729000" />
+      <workItem from="1733686315331" duration="1122000" />
     </task>
     <servers />
   </component>
