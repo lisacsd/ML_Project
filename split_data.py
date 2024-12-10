@@ -1,31 +1,26 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-file_path = "Preprocessed_Student_Mental_Health.xlsx"
-data = pd.read_excel(file_path)
+input_file = "Preprocessed_Student_Mental_Health.xlsx"
+df = pd.read_excel(input_file)
 
+features = df.drop(columns=["Depression_Yes", "Anxiety_Yes", "Panic Attack_Yes"])
+target_dep = df["Depression_Yes"]
+target_anx = df["Anxiety_Yes"]
+target_pan = df["Panic Attack_Yes"]
 
-X = data.drop(columns=["Depression_Yes", "Anxiety_Yes", "Panic Attack_Yes"])
-y_depression = data["Depression_Yes"]
-y_anxiety = data["Anxiety_Yes"]
-y_panic = data["Panic Attack_Yes"]
+X_train_d, X_test_d, y_train_d, y_test_d = train_test_split(features, target_dep, test_size=0.2, random_state=42)
+X_train_a, X_test_a, y_train_a, y_test_a = train_test_split(features, target_anx, test_size=0.2, random_state=42)
+X_train_p, X_test_p, y_train_p, y_test_p = train_test_split(features, target_pan, test_size=0.2, random_state=42)
 
-# split (80% train, 20% test)
-X_train_dep, X_test_dep, y_train_dep, y_test_dep = train_test_split(X, y_depression, test_size=0.2, random_state=42)
-X_train_anx, X_test_anx, y_train_anx, y_test_anx = train_test_split(X, y_anxiety, test_size=0.2, random_state=42)
-X_train_pan, X_test_pan, y_train_pan, y_test_pan = train_test_split(X, y_panic, test_size=0.2, random_state=42)
+train_set = pd.concat([X_train_d, y_train_d, y_train_a, y_train_p], axis=1)
+test_set = pd.concat([X_test_d, y_test_d, y_test_a, y_test_p], axis=1)
 
+train_file = "Train_Student_Mental_Health.xlsx"
+train_set.to_excel(train_file, index=False)
 
-train_data = pd.concat([X_train_dep, y_train_dep, y_train_anx, y_train_pan], axis=1)
-test_data = pd.concat([X_test_dep, y_test_dep, y_test_anx, y_test_pan], axis=1)
+test_file = "Test_Student_Mental_Health.xlsx"
+test_set.to_excel(test_file, index=False)
 
-
-train_output_path = "./Train_Student_Mental_Health.xlsx"
-train_data.to_excel(train_output_path, index=False)
-
-
-test_output_path = "./Test_Student_Mental_Health.xlsx"
-test_data.to_excel(test_output_path, index=False)
-
-print(f"Training data has been saved to {train_output_path}")
-print(f"Testing data has been saved to {test_output_path}")
+print(f"Saved training dataset to {train_file}")
+print(f"Saved testing dataset to {test_file}")

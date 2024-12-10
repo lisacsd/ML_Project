@@ -1,32 +1,32 @@
 import pandas as pd
 
-file_path = 'Student_Mental_Health_Cleaned.xlsx'
-data = pd.read_excel(file_path)
+input_file = 'Student_Mental_Health_Cleaned.xlsx'
+df = pd.read_excel(input_file)
 
-if 'Timestamp' in data.columns:
-    data.drop(columns=['Timestamp'], inplace=True)
+if 'Timestamp' in df.columns:
+    df.drop(columns=['Timestamp'], inplace=True)
 
-output_file = "Summary_Statistics.xlsx"
-writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
-sheet = writer.book.add_worksheet("Summary")
+output_summary = "Mental_Health_Summary.xlsx"
+excel_writer = pd.ExcelWriter(output_summary, engine='xlsxwriter')
+worksheet = excel_writer.book.add_worksheet("Overview")
 
-col_num = 0
+column_index = 0
 
-age_summary = data['Age'].describe().drop(['25%', '50%', '75%']).rename({'std': 'Standard Deviation'}).reset_index()
-age_summary.columns = ['Age', 'Value']
-age_summary.to_excel(writer, sheet_name='Summary', index=False, startrow=0, startcol=col_num)
-col_num += 3
+age_stats = df['Age'].describe().drop(['25%', '50%', '75%']).rename({'std': 'Std Dev'}).reset_index()
+age_stats.columns = ['Age Stats', 'Values']
+age_stats.to_excel(excel_writer, sheet_name='Overview', index=False, startrow=0, startcol=column_index)
+column_index += 3
 
-categorical_cols = data.select_dtypes(include=['object']).columns
+category_columns = df.select_dtypes(include=['object']).columns
 
-for col in categorical_cols:
-    sheet.write(0, col_num, col)
+for category in category_columns:
+    worksheet.write(0, column_index, category)
 
-    value_counts = data[col].value_counts().reset_index()
-    value_counts.columns = ['Value', 'Count']
+    category_counts = df[category].value_counts().reset_index()
+    category_counts.columns = ['Category Value', 'Frequency']
 
-    value_counts.to_excel(writer, sheet_name='Summary', index=False, startrow=1, startcol=col_num)
-    col_num += 3
+    category_counts.to_excel(excel_writer, sheet_name='Overview', index=False, startrow=1, startcol=column_index)
+    column_index += 3
 
-writer.close()
-print(f"Summary saved in {output_file}")
+excel_writer.close()
+print(f"File saved: {output_summary}")

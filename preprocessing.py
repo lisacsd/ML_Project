@@ -2,49 +2,38 @@ import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 
+path = 'Student_Mental_Health_Cleaned.xlsx'
 
-file_path = 'Student_Mental_Health_Cleaned.xlsx'
+df = pd.read_excel(path)
 
-data = pd.read_excel(file_path)
+df = df.drop(columns=['Timestamp'], errors='ignore')
 
+categories = ['Gender', 'Course', 'Year of Study', 'CGPA',
+              'Marital Status', 'Depression', 'Anxiety', 'Panic Attack', 'Specialist Treatment']
 
-data = data.drop(columns=['Timestamp'], errors='ignore')
+df[categories] = df[categories].fillna("Unknown")
 
+numerics = ['Age']
 
-categorical_features = ['Gender', 'Course', 'Year of Study', 'CGPA',
-                        'Marital Status', 'Depression', 'Anxiety', 'Panic Attack', 'Specialist Treatment']
-
-
-data[categorical_features] = data[categorical_features].fillna("Unknown")
-
-
-numerical_features = ['Age']
-
-
-preprocessor = ColumnTransformer(
+transformer = ColumnTransformer(
     transformers=[
-        ('cat', OneHotEncoder(drop='first', sparse_output=False), categorical_features)
+        ('encoder', OneHotEncoder(drop='first', sparse_output=False), categories)
     ],
     remainder='passthrough'
 )
 
+transformed_data = transformer.fit_transform(df)
 
-preprocessed_data = preprocessor.fit_transform(data)
+encoded_columns = transformer.named_transformers_['encoder'].get_feature_names_out(categories)
 
+all_columns = list(encoded_columns) + numerics
 
-cat_col_names = preprocessor.named_transformers_['cat'].get_feature_names_out(categorical_features)
+final_df = pd.DataFrame(transformed_data, columns=all_columns)
 
+ordered_columns = ['Age'] + [col for col in final_df.columns if col != 'Age']
+final_df = final_df[ordered_columns]
 
-all_feature_names = list(cat_col_names) + numerical_features
+output = "Preprocessed_Student_Mental_Health.xlsx"
+final_df.to_excel(output, index=False)
 
-
-preprocessed_df = pd.DataFrame(preprocessed_data, columns=all_feature_names)
-
-columns_order = ['Age'] + [col for col in preprocessed_df.columns if col != 'Age']
-preprocessed_df = preprocessed_df[columns_order]
-
-
-output_file = "Preprocessed_Student_Mental_Health.xlsx"
-preprocessed_df.to_excel(output_file, index=False)
-
-print(f"file saved: {output_file}")
+print(f"Saved file: {output}")

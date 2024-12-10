@@ -1,81 +1,69 @@
-# Importing Libraries
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report, roc_auc_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import GridSearchCV
 
-# Load Data
-data = pd.read_excel("Preprocessed_Student_Mental_Health.xlsx")
+# Load preprocessed training and testing data
+train_df = pd.read_excel("Train_Student_Mental_Health.xlsx")
+test_df = pd.read_excel("Test_Student_Mental_Health.xlsx")
 
-# Splitting Features and Targets
-X = data.drop(['Depression_Yes', 'Anxiety_Yes', 'Panic Attack_Yes'], axis=1)
-y_depression = data['Depression_Yes']
-y_anxiety = data['Anxiety_Yes']
-y_panic = data['Panic Attack_Yes']
+# Define features and targets for training and testing
+X_train = train_df.drop(['Depression_Yes', 'Anxiety_Yes', 'Panic Attack_Yes'], axis=1)
+y_train = {
+    "Depression": train_df['Depression_Yes'],
+    "Anxiety": train_df['Anxiety_Yes'],
+    "Panic Attack": train_df['Panic Attack_Yes']
+}
 
-# Train-Test Split
-X_train, X_test, y_train_depression, y_test_depression = train_test_split(X, y_depression, test_size=0.2, random_state=42)
-_, _, y_train_anxiety, y_test_anxiety = train_test_split(X, y_anxiety, test_size=0.2, random_state=42)
-_, _, y_train_panic, y_test_panic = train_test_split(X, y_panic, test_size=0.2, random_state=42)
+X_test = test_df.drop(['Depression_Yes', 'Anxiety_Yes', 'Panic Attack_Yes'], axis=1)
+y_test = {
+    "Depression": test_df['Depression_Yes'],
+    "Anxiety": test_df['Anxiety_Yes'],
+    "Panic Attack": test_df['Panic Attack_Yes']
+}
 
-# Define Models
-models = {
+# Initialize models and hyperparameters
+classifiers = {
     "Decision Tree": DecisionTreeClassifier(random_state=42),
     "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42),
     "KNN": KNeighborsClassifier()
 }
 
-# Hyperparameter Tuning
-model_params = {
+parameters = {
     "Decision Tree": {'max_depth': [3, 5, 10, None]},
     "Logistic Regression": {'C': [0.1, 1, 10, 100]},
     "KNN": {'n_neighbors': [3, 5, 7, 9], 'metric': ['euclidean', 'manhattan']}
 }
 
-# Evaluation Function
-def evaluate_model(model, X_train, y_train, X_test, y_test):
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    y_proba = model.predict_proba(X_test)[:, 1]
+# Store evaluation results
+evaluation_results = []
 
-    report = classification_report(y_test, y_pred, output_dict=True)
-    roc_score = roc_auc_score(y_test, y_proba)
+# Model evaluation process
+for clf_name, clf in classifiers.items():
+    for target in y_train.keys():
+        grid_search = GridSearchCV(clf, parameters[clf_name], cv=5)
+        grid_search.fit(X_train, y_train[target])
 
-    return {
-        "Precision": report['weighted avg']['precision'],
-        "Recall": report['weighted avg']['recall'],
-        "F1-Score": report['weighted avg']['f1-score'],
-        "ROC AUC": roc_score
-    }
+        preds = grid_search.predict(X_test)
+        probs = grid_search.predict_proba(X_test)[:, 1]
 
-# Store Results
-results = []
+        report = classification_report(y_test[target], preds, output_dict=True)
+        roc_auc = roc_auc_score(y_test[target], probs)
 
-# Evaluate All Models
-for model_name, model in models.items():
-    for target_name, (y_train, y_test) in zip(
-        ["Depression", "Anxiety", "Panic Attack"],
-        [(y_train_depression, y_test_depression),
-         (y_train_anxiety, y_test_anxiety),
-         (y_train_panic, y_test_panic)]
-    ):
-        tuned_model = GridSearchCV(model, model_params[model_name], cv=5)
-        scores = evaluate_model(tuned_model, X_train, y_train, X_test, y_test)
-        results.append({
-            "Model": model_name,
-            "Target": target_name,
-            "Precision": round(scores["Precision"], 3),
-            "Recall": round(scores["Recall"], 3),
-            "F1-Score": round(scores["F1-Score"], 3),
-            "ROC AUC": round(scores["ROC AUC"], 3)
+        evaluation_results.append({
+            "Model": clf_name,
+            "Target": target,
+            "Precision": round(report['weighted avg']['precision'], 3),
+            "Recall": round(report['weighted avg']['recall'], 3),
+            "F1-Score": round(report['weighted avg']['f1-score'], 3),
+            "ROC AUC": round(roc_auc, 3)
         })
 
-# Convert to DataFrame and Save to Excel
-results_df = pd.DataFrame(results)
-output_file = "Model_Evaluation_Results.xlsx"
-results_df.to_excel(output_file, index=False)
+# Save results to an Excel file
+output_file_name = "Model_Evaluation_Summary_Train_Test.xlsx"
+results_df = pd.DataFrame(evaluation_results)
+results_df.to_excel(output_file_name, index=False)
 
-print(f"Results saved to {output_file}")
+print(f"Results saved to {output_file_name}")
