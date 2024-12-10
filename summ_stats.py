@@ -2,7 +2,11 @@ import pandas as pd
 from tabulate import tabulate
 
 
+<<<<<<< HEAD
 file_path = 'Student_Mental_Health_Cleaned.xlsx'
+=======
+file_path = '../../../Downloads/Student_Mental_Health_Cleaned.xlsx'
+>>>>>>> 8ebb78ead962e26240a106dfae91a879e13de82c
 data = pd.read_excel(file_path)
 
 
