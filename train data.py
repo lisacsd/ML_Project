@@ -5,7 +5,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report, roc_auc_score, accuracy_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import cross_val_score
+import numpy as np
 
 # Load the training and testing datasets
 train_file_path = "Train_Student_Mental_Health.xlsx"
@@ -32,6 +33,8 @@ X_test_scaled = scaler.transform(X_test)
 
 # Initialize results storage
 evaluation_results = []
+cross_val_results = []
+
 
 # Function to train and evaluate a model
 def train_and_evaluate_model(model, X_train, X_test, y_train, y_test, model_name, target):
@@ -56,6 +59,7 @@ def train_and_evaluate_model(model, X_train, X_test, y_train, y_test, model_name
         "ROC AUC": roc_auc
     })
 
+
 # Evaluate models for each target
 targets = {
     "Depression": (y_train_depression, y_test_depression),
@@ -75,8 +79,12 @@ for target, (y_train, y_test) in targets.items():
         X_test_data = X_test_scaled if model_name != "Decision Tree" else X_test
         train_and_evaluate_model(model, X_train_data, X_test_data, y_train, y_test, model_name, target)
 
-# Save results to Excel
-results_df = pd.DataFrame(evaluation_results)
-output_file = "Evaluation_Results_Updated.xlsx"
-results_df.to_excel(output_file, index=False)
-print(f"Evaluation results saved to {output_file}.")
+# Perform cross-validation
+for target_name, y_train in zip(["Depression", "Anxiety", "Panic Attack"],
+                                [y_train_depression, y_train_anxiety, y_train_panic]):
+    for model_name, model in models.items():
+        X_data = X_train.copy()
+
+        # Scale features for Logistic Regression and KNN
+        if model_name in ["Logistic Regression", "KNN"]:
+            X_data = scaler.fit_transform(X_data)
