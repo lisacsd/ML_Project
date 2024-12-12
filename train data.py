@@ -1,69 +1,82 @@
+# Import libraries
 import pandas as pd
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import classification_report, roc_auc_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report, roc_auc_score, accuracy_score
+from sklearn.model_selection import GridSearchCV
 
-# Load preprocessed training and testing data
-train_df = pd.read_excel("Train_Student_Mental_Health.xlsx")
-test_df = pd.read_excel("Test_Student_Mental_Health.xlsx")
+# Load the training and testing datasets
+train_file_path = "Train_Student_Mental_Health.xlsx"
+test_file_path = "Test_Student_Mental_Health.xlsx"
 
-# Define features and targets for training and testing
-X_train = train_df.drop(['Depression_Yes', 'Anxiety_Yes', 'Panic Attack_Yes'], axis=1)
-y_train = {
-    "Depression": train_df['Depression_Yes'],
-    "Anxiety": train_df['Anxiety_Yes'],
-    "Panic Attack": train_df['Panic Attack_Yes']
-}
+train_data = pd.read_excel(train_file_path)
+test_data = pd.read_excel(test_file_path)
 
-X_test = test_df.drop(['Depression_Yes', 'Anxiety_Yes', 'Panic Attack_Yes'], axis=1)
-y_test = {
-    "Depression": test_df['Depression_Yes'],
-    "Anxiety": test_df['Anxiety_Yes'],
-    "Panic Attack": test_df['Panic Attack_Yes']
-}
+# Separate features and target variables
+X_train = train_data.drop(columns=["Depression_Yes", "Anxiety_Yes", "Panic Attack_Yes"])
+y_train_depression = train_data["Depression_Yes"]
+y_train_anxiety = train_data["Anxiety_Yes"]
+y_train_panic = train_data["Panic Attack_Yes"]
 
-# Initialize models and hyperparameters
-classifiers = {
-    "Decision Tree": DecisionTreeClassifier(random_state=42),
-    "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42),
-    "KNN": KNeighborsClassifier()
-}
+X_test = test_data.drop(columns=["Depression_Yes", "Anxiety_Yes", "Panic Attack_Yes"])
+y_test_depression = test_data["Depression_Yes"]
+y_test_anxiety = test_data["Anxiety_Yes"]
+y_test_panic = test_data["Panic Attack_Yes"]
 
-parameters = {
-    "Decision Tree": {'max_depth': [3, 5, 10, None]},
-    "Logistic Regression": {'C': [0.1, 1, 10, 100]},
-    "KNN": {'n_neighbors': [3, 5, 7, 9], 'metric': ['euclidean', 'manhattan']}
-}
+# Scale features for Logistic Regression and KNN
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
-# Store evaluation results
+# Initialize results storage
 evaluation_results = []
 
-# Model evaluation process
-for clf_name, clf in classifiers.items():
-    for target in y_train.keys():
-        grid_search = GridSearchCV(clf, parameters[clf_name], cv=5)
-        grid_search.fit(X_train, y_train[target])
+# Function to train and evaluate a model
+def train_and_evaluate_model(model, X_train, X_test, y_train, y_test, model_name, target):
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    y_prob = model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else None
 
-        preds = grid_search.predict(X_test)
-        probs = grid_search.predict_proba(X_test)[:, 1]
+    report = classification_report(y_test, y_pred, output_dict=True)
+    accuracy = accuracy_score(y_test, y_pred)
+    roc_auc = roc_auc_score(y_test, y_prob) if y_prob is not None else "N/A"
 
-        report = classification_report(y_test[target], preds, output_dict=True)
-        roc_auc = roc_auc_score(y_test[target], probs)
+    evaluation_results.append({
+        "Model": model_name,
+        "Target": target,
+        "Accuracy": accuracy,
+        "Precision (Macro)": report["macro avg"]["precision"],
+        "Recall (Macro)": report["macro avg"]["recall"],
+        "F1-Score (Macro)": report["macro avg"]["f1-score"],
+        "Precision (Weighted)": report["weighted avg"]["precision"],
+        "Recall (Weighted)": report["weighted avg"]["recall"],
+        "F1-Score (Weighted)": report["weighted avg"]["f1-score"],
+        "ROC AUC": roc_auc
+    })
 
-        evaluation_results.append({
-            "Model": clf_name,
-            "Target": target,
-            "Precision": round(report['weighted avg']['precision'], 3),
-            "Recall": round(report['weighted avg']['recall'], 3),
-            "F1-Score": round(report['weighted avg']['f1-score'], 3),
-            "ROC AUC": round(roc_auc, 3)
-        })
+# Evaluate models for each target
+targets = {
+    "Depression": (y_train_depression, y_test_depression),
+    "Anxiety": (y_train_anxiety, y_test_anxiety),
+    "Panic Attack": (y_train_panic, y_test_panic)
+}
 
-# Save results to an Excel file
-output_file_name = "Model_Evaluation_Summary_Train_Test.xlsx"
+models = {
+    "Decision Tree": DecisionTreeClassifier(max_depth=5, random_state=42),
+    "Logistic Regression": LogisticRegression(random_state=42, max_iter=1000),
+    "KNN": KNeighborsClassifier(n_neighbors=5)
+}
+
+for target, (y_train, y_test) in targets.items():
+    for model_name, model in models.items():
+        X_train_data = X_train_scaled if model_name != "Decision Tree" else X_train
+        X_test_data = X_test_scaled if model_name != "Decision Tree" else X_test
+        train_and_evaluate_model(model, X_train_data, X_test_data, y_train, y_test, model_name, target)
+
+# Save results to Excel
 results_df = pd.DataFrame(evaluation_results)
-results_df.to_excel(output_file_name, index=False)
-
-print(f"Results saved to {output_file_name}")
+output_file = "Evaluation_Results_Updated.xlsx"
+results_df.to_excel(output_file, index=False)
+print(f"Evaluation results saved to {output_file}.")
