@@ -88,3 +88,27 @@ for target_name, y_train in zip(["Depression", "Anxiety", "Panic Attack"],
         # Scale features for Logistic Regression and KNN
         if model_name in ["Logistic Regression", "KNN"]:
             X_data = scaler.fit_transform(X_data)
+
+        # Perform 5-fold cross-validation
+        scores = cross_val_score(model, X_data, y_train, cv=5, scoring='accuracy')
+
+        # Append results
+        cross_val_results.append({
+            "Model": model_name,
+            "Target": target_name,
+            "Cross-Validation Mean Accuracy": np.mean(scores),
+            "Cross-Validation Std Dev": np.std(scores)
+        })
+
+# Save evaluation and cross-validation results to Excel
+results_df = pd.DataFrame(evaluation_results)
+cv_results_df = pd.DataFrame(cross_val_results)
+
+# Save files
+output_file_eval = "Evaluation_Results_Updated.xlsx"
+output_file_cv = "Evaluation_Results_With_CV.xlsx"
+
+results_df.to_excel(output_file_eval, index=False)
+cv_results_df.to_excel(output_file_cv, index=False)
+
+print(f"Evaluation results saved to {output_file_eval}.")
