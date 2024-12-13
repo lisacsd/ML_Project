@@ -1,21 +1,20 @@
-# Import libraries
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report, roc_auc_score, accuracy_score
-from sklearn.model_selection import cross_val_score
+from sklearn.metrics import classification_report, roc_auc_score
+from sklearn.model_selection import cross_val_score, GridSearchCV
 import numpy as np
 
-# Load the training and testing datasets
+
 train_file_path = "Train_Student_Mental_Health.xlsx"
 test_file_path = "Test_Student_Mental_Health.xlsx"
 
 train_data = pd.read_excel(train_file_path)
 test_data = pd.read_excel(test_file_path)
 
-# Separate features and target variables
+
 X_train = train_data.drop(columns=["Depression_Yes", "Anxiety_Yes", "Panic Attack_Yes"])
 y_train_depression = train_data["Depression_Yes"]
 y_train_anxiety = train_data["Anxiety_Yes"]
@@ -26,14 +25,69 @@ y_test_depression = test_data["Depression_Yes"]
 y_test_anxiety = test_data["Anxiety_Yes"]
 y_test_panic = test_data["Panic Attack_Yes"]
 
-# Scale features for Logistic Regression and KNN
+
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-# Initialize results storage
+
 evaluation_results = []
 cross_val_results = []
+
+
+param_grids = {
+    "Decision Tree": {
+        'max_depth': [3, 5, 10, None],
+        'min_samples_split': [2, 5, 10],
+        'min_samples_leaf': [1, 2, 4]
+    },
+    "Logistic Regression": {
+        'C': [0.01, 0.1, 1, 10, 100],
+        'solver': ['liblinear', 'lbfgs']
+    },
+    "KNN": {
+        'n_neighbors': [3, 5, 7, 9],
+        'weights': ['uniform', 'distance']
+    }
+}
+
+
+
+def tune_model(model, param_grid, X_train, y_train):
+    grid_search = GridSearchCV(
+        estimator=model,
+        param_grid=param_grid,
+        cv=5,
+        scoring='f1',
+        n_jobs=-1
+    )
+    grid_search.fit(X_train, y_train)
+    return grid_search.best_estimator_
+
+
+
+tuned_models = {}
+targets = {
+    "Depression": (y_train_depression, y_test_depression),
+    "Anxiety": (y_train_anxiety, y_test_anxiety),
+    "Panic Attack": (y_train_panic, y_test_panic)
+}
+
+for target, (y_train, y_test) in targets.items():
+    tuned_models[target] = {}
+    for model_name, param_grid in param_grids.items():
+        base_model = {
+            "Decision Tree": DecisionTreeClassifier(random_state=42),
+            "Logistic Regression": LogisticRegression(random_state=42, max_iter=1000),
+            "KNN": KNeighborsClassifier()
+        }[model_name]
+
+        # Use scaled data if necessary
+        X_train_data = X_train_scaled if model_name != "Decision Tree" else X_train
+
+        # Tune model
+        best_model = tune_model(base_model, param_grid, X_train_data, y_train)
+        tuned_models[target][model_name] = best_model
 
 
 # Function to train and evaluate a model
@@ -43,56 +97,38 @@ def train_and_evaluate_model(model, X_train, X_test, y_train, y_test, model_name
     y_prob = model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else None
 
     report = classification_report(y_test, y_pred, output_dict=True)
-    accuracy = accuracy_score(y_test, y_pred)
+    precision = report["1"]["precision"]
+    recall = report["1"]["recall"]
+    f1_score = report["1"]["f1-score"]
     roc_auc = roc_auc_score(y_test, y_prob) if y_prob is not None else "N/A"
 
     evaluation_results.append({
         "Model": model_name,
         "Target": target,
-        "Accuracy": accuracy,
-        "Precision (Macro)": report["macro avg"]["precision"],
-        "Recall (Macro)": report["macro avg"]["recall"],
-        "F1-Score (Macro)": report["macro avg"]["f1-score"],
-        "Precision (Weighted)": report["weighted avg"]["precision"],
-        "Recall (Weighted)": report["weighted avg"]["recall"],
-        "F1-Score (Weighted)": report["weighted avg"]["f1-score"],
+        "Precision": precision,
+        "Recall": recall,
+        "F1-Score": f1_score,
         "ROC AUC": roc_auc
     })
 
 
-# Evaluate models for each target
-targets = {
-    "Depression": (y_train_depression, y_test_depression),
-    "Anxiety": (y_train_anxiety, y_test_anxiety),
-    "Panic Attack": (y_train_panic, y_test_panic)
-}
-
-models = {
-    "Decision Tree": DecisionTreeClassifier(max_depth=5, random_state=42),
-    "Logistic Regression": LogisticRegression(random_state=42, max_iter=1000),
-    "KNN": KNeighborsClassifier(n_neighbors=5)
-}
 
 for target, (y_train, y_test) in targets.items():
-    for model_name, model in models.items():
+    for model_name, model in tuned_models[target].items():
         X_train_data = X_train_scaled if model_name != "Decision Tree" else X_train
         X_test_data = X_test_scaled if model_name != "Decision Tree" else X_test
         train_and_evaluate_model(model, X_train_data, X_test_data, y_train, y_test, model_name, target)
 
-# Perform cross-validation
+
 for target_name, y_train in zip(["Depression", "Anxiety", "Panic Attack"],
                                 [y_train_depression, y_train_anxiety, y_train_panic]):
-    for model_name, model in models.items():
-        X_data = X_train.copy()
+    for model_name, model in tuned_models[target_name].items():
+        X_data = X_train_scaled if model_name in ["Logistic Regression", "KNN"] else X_train
 
-        # Scale features for Logistic Regression and KNN
-        if model_name in ["Logistic Regression", "KNN"]:
-            X_data = scaler.fit_transform(X_data)
 
-        # Perform 5-fold cross-validation
         scores = cross_val_score(model, X_data, y_train, cv=5, scoring='accuracy')
 
-        # Append results
+
         cross_val_results.append({
             "Model": model_name,
             "Target": target_name,
@@ -100,15 +136,16 @@ for target_name, y_train in zip(["Depression", "Anxiety", "Panic Attack"],
             "Cross-Validation Std Dev": np.std(scores)
         })
 
-# Save evaluation and cross-validation results to Excel
+
 results_df = pd.DataFrame(evaluation_results)
 cv_results_df = pd.DataFrame(cross_val_results)
 
-# Save files
+
 output_file_eval = "Evaluation_Results_Updated.xlsx"
 output_file_cv = "Evaluation_Results_With_CV.xlsx"
 
 results_df.to_excel(output_file_eval, index=False)
 cv_results_df.to_excel(output_file_cv, index=False)
 
-print(f"Evaluation results saved to {output_file_eval}.")
+
+print(f"Saved files: {output_file_eval}, {output_file_cv}")
